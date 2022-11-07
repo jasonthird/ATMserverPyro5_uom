@@ -1,6 +1,7 @@
 import Pyro5.api
 from decimal import *
 import sys
+
 import SqlConnection
 
 getcontext().prec = 13 + 4
@@ -12,10 +13,14 @@ def main():
     @Pyro5.api.expose
     class Atm(object):
         def Auth(self, pin, name):
-            cur = sql.dbConnectAndExecute(
-                "SELECT AuthCode from authCode inner join users u on authCode.owner_id = u.id where u.id = authCode.owner_id and u.pin = ? and u.username = ?",
-                (pin, name))
-            return cur.next()
+            try:
+                cur = sql.dbConnectAndExecute(
+                    """SELECT AuthCode from authCode inner join users u on authCode.owner_id = u.id 
+                    where u.id = authCode.owner_id and u.pin = ? and u.username = ?""",
+                    (pin, name))
+                return cur.next()
+            except :
+                return "mariadb error"
 
         def getBalance(self, Authcode):
             cur = sql.dbConnectAndExecute(
@@ -33,7 +38,7 @@ def main():
                 (money, money, auth,))
             # check if the change was made
             if self.getBalance(auth) == money:
-                return 1  # failed
+                return 1  # failed due to invalid arguments
             return 0  # success
 
         def withdraw(self, auth, value):

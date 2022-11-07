@@ -36,7 +36,7 @@ class Sql:
             conn.commit()
             return cur
         except mariadb.Error as e:
-            print(f"Error: {e}")
+            return e
         finally:
             conn.close()
             del conn
