@@ -1,5 +1,7 @@
 import Pyro5.api
+import Pyro5.socketutil
 from decimal import *
+import socket
 import sys
 
 import SqlConnection
@@ -72,14 +74,16 @@ def main():
             except Exception:
                 return "backend error"
 
-    daemon = Pyro5.server.Daemon()  # make a Pyro daemon
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)  # get ip address of current machine
+    daemon = Pyro5.server.Daemon(host=ip_address)  # make a Pyro daemon
     ns = Pyro5.api.locate_ns()  # find the name server
     uri = daemon.register(Atm)  # register the greeting maker as a Pyro object
     ns.register("example.Atm", uri)  # register the object with a name in the name server
-    name = ns.lookup("example.Atm")
     print("Name of the object:", ns.list(prefix="example.Atm"))
-    print("if running on a different machine, use the ip address of the server")
-    print("but first try PYRONAME:example.Atm")
+    print("PYRONAME:example.Atm")
+    print(ip_address)
+    print(hostname)
     daemon.requestLoop()  # start the event loop of the server to wait for calls
 
 
