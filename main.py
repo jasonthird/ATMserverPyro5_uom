@@ -75,29 +75,32 @@ def main():
     daemon = Pyro5.server.Daemon()  # make a Pyro daemon
     ns = Pyro5.api.locate_ns()  # find the name server
     uri = daemon.register(Atm)  # register the greeting maker as a Pyro object
-    name = ns.register("example.Atm", uri)  # register the object with a name in the name server
-
-    print("URI:", uri)
-    print("nameserver:", ns)
-    print("Ready.")
+    ns.register("example.Atm", uri)  # register the object with a name in the name server
+    name = ns.lookup("example.Atm")
+    print("Name of the object:", ns.list(prefix="example.Atm"))
+    print("if running on a different machine, use the ip address of the server")
+    print("but first try PYRONAME:example.Atm")
     daemon.requestLoop()  # start the event loop of the server to wait for calls
 
 
-#for testing
+# for testing
 def createDb():
     sql = SqlConnection.Sql()
     sql.createDb()
 
+
 def createTables():
     sql = SqlConnection.Sql()
     sql.createTables()
+
+
 def insertTestData():
     sql = SqlConnection.Sql()
     sql.insertTestData()
 
 
 if __name__ == "__main__":
-    if (len(sys.argv) > 1):
+    if len(sys.argv) > 1:
         if sys.argv[1] == "createDb":
             try:
                 createDb()
@@ -121,4 +124,4 @@ if __name__ == "__main__":
             except Exception as e:
                 print(e)
     else:
-        main() # start the server
+        main()  # start the server
