@@ -3,5 +3,5 @@
   "password": "mypass",
   "host": "172.17.0.2",
   "port": "3306",
-  "database":"atm"
+  "database":"atmTest1"
 }

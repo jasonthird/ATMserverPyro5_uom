@@ -1,4 +1,7 @@
+import string
 import sys
+from decimal import Decimal
+import random
 import mariadb
 import json
 
@@ -26,7 +29,7 @@ class Sql:
             return conn
         except mariadb.Error as e:
             print(f"Error connecting to MariaDB Platform: {e}")
-            sys.exit(1)
+            return e
 
     def dbConnectAndExecute(self, query, args):
         try:
@@ -39,4 +42,119 @@ class Sql:
             return e
         finally:
             conn.close()
-            del conn
+
+    def createDb(self):
+        try:
+            conn = mariadb.connect(
+                user=self.user,
+                password=self.password,
+                host=self.host,
+                port=self.port,
+            )
+            cur = conn.cursor()
+            cur.execute("CREATE DATABASE IF NOT EXISTS " + self.database)
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
+
+    def createTables(self):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    username char(40) not null unique,
+                    pin int not null
+                    )
+                        collate utf8mb3_unicode_ci;
+                    """)
+            cur.execute(""" 
+                CREATE TABLE IF NOT EXISTS authCode (
+                    owner_id int not null,
+                    AuthCode char(40) null unique,
+                    constraint authCode_users_null_fk
+                        foreign key (owner_id) references users (id)
+                )""")
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS balances (
+                    id       int auto_increment
+                    primary key,
+                    owner_id int            not null comment 'the one from users',
+                    balance  decimal(13, 4) not null comment 'In euro',
+                    constraint balances_users_null_fk
+                        foreign key (owner_id) references users (id)
+                )""")
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
+
+    def insertUser(self, username, pin):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO users (username, pin) VALUES (?, ?)", (username, pin))
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
+
+    def insertAuthCode(self, owner_id, authCode):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO authCode (owner_id, AuthCode) VALUES (?, ?)", (owner_id, authCode))
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
+
+    def insertBalance(self, owner_id, balance):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO balances (owner_id, balance) VALUES (?, ?)", (owner_id, balance))
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
+
+    def get_random_string(self, length):
+        # choose from all lowercase letter
+        letters = string.ascii_lowercase
+        result_str = ''.join(random.choice(letters) for i in range(length))
+        return result_str
+    def get_random_number(self, length):
+        resultInt = random.randint(10**(length-1), (10**length)-1)
+        return resultInt
+
+    def insertTestData(self):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            for i in range(1, 11):
+                cur.execute("INSERT INTO users (username, pin) VALUES (?, ?)", ("user" + str(i)+self.get_random_string(1),self.get_random_number(4)))
+            conn.commit()
+            for i in range(1, 11):
+                cur.execute("INSERT INTO authCode (owner_id, AuthCode) VALUES (?, ?)", (i, self.get_random_string(39)))
+            conn.commit()
+            for i in range(1, 11):
+                cur.execute("INSERT INTO balances (owner_id, balance) VALUES (?, ?)", (i, Decimal(random.randrange(1000))))
+            conn.commit()
+            return cur
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
