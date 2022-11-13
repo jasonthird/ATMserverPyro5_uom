@@ -139,20 +139,30 @@ class Sql:
     def get_random_number(self, length):
         resultInt = random.randint(10**(length-1), (10**length)-1)
         return resultInt
-
+    def getUserId(self,user):
+        try:
+            conn = self.connect()
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM users WHERE username = ?", (user,))
+            return cur.fetchone()[0]
+        except mariadb.Error as e:
+            return e
+        finally:
+            conn.close()
     def insertTestData(self):
         try:
             conn = self.connect()
             cur = conn.cursor()
-            for i in range(1, 11):
-                cur.execute("INSERT INTO users (username, pin) VALUES (?, ?)", ("user" + str(i)+self.get_random_string(1),self.get_random_number(4)))
-            conn.commit()
-            for i in range(1, 11):
-                cur.execute("INSERT INTO authCode (owner_id, AuthCode) VALUES (?, ?)", (i, self.get_random_string(39)))
-            conn.commit()
-            for i in range(1, 11):
-                cur.execute("INSERT INTO balances (owner_id, balance) VALUES (?, ?)", (i, Decimal(random.randrange(1000))))
-            conn.commit()
+            users = dict()
+            for i in range(10):
+                username = "user" + self.get_random_string(5)
+                pin = self.get_random_number(4)
+                users[username] = pin
+            for user in users:
+                self.insertUser(user, users[user])
+                self.insertBalance(self.getUserId(user), Decimal(self.get_random_number(4)+self.get_random_number(2)/100))
+                self.insertAuthCode(self.getUserId(user), self.get_random_string(40))
+                print("Inserted user: " + user + " with pin: " + str(users[user]))
             return cur
         except mariadb.Error as e:
             return e

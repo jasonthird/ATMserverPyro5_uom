@@ -83,7 +83,6 @@ def main():
     print("Name of the object:", ns.list(prefix="example.Atm"))
     print("PYRONAME:example.Atm")
     print(ip_address)
-    print(hostname)
     daemon.requestLoop()  # start the event loop of the server to wait for calls
 
 
