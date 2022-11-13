@@ -1,8 +1,8 @@
 # ATM tellel machine server using pyro5
 Exercise for the distributed programming course in university of macedonia
 
-## Python3 dependences 
-mariadb Pyro5
+## Python3.10.8 dependences 
+mariadb(1.1.4) Pyro5(5.14)
   
 ## Usage
 Given that you have access to a mariadb instance, modify the sqlConfig.json to configure the database connection.
